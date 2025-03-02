@@ -4,7 +4,7 @@ import json
 import time
 
 # API Keys
-NINJAS_API_KEY = "ALhKsaYwbNLR/ZGG60cyFQ==XUVxJQPFw299LKpd"
+NINJAS_API_KEY = "PLACEHOLDER"
 
 
 # Read the CSV files
