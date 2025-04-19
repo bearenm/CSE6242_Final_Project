@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>S&P 500 Earnings - Zoomable Circle Packing</title>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://d3js.org/d3-array.v2.min.js"></script>
+  <style>
+    .node {
+      cursor: pointer;
+    }
+    
+    .node:hover {
+      stroke: #000;
+      stroke-width: 4px;
+    }
+    
+    .node--leaf {
+      fill: white;
+      font-size: 10px;
+      color: black;
+
+    }
+    
+    .label {
+      font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+      text-anchor: middle;
+      text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
+    }
+
+    .leaf {
+      font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: black;
+      text-anchor: middle;
+      text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff, 0 -1px 0 #fff;
+    }
+    
+    #zoomable {
+      position: relative;
+      top: 100px;
+      left: 25px;
+      width: 350;
+      height: 350px;
+    }
+
+    #header {
+      position: absolute;
+      font-size: 12px;
+      width: 350px;
+      text-align: center; /* Horizontal alignment */
+    }
+
+    #header_filters {
+      float: left;
+      width: 100%;
+      position: relative;
+      font-size: 16px;
+      width: 200px;
+      text-align: left; /* Horizontal alignment */
+    }
+
+    #header_filter_sector {
+      float: left;
+      width: 100%;
+      font-size: 16px;
+      width: 200px;
+      text-align: left; /* Horizontal alignment */
+    }
+    #selectButton_year {
+      display: inline-block
+    }
+
+    #selectButton_sector {
+      display: inline-block
+    }
+
+    .container {
+  display: grid;
+  grid-template-areas:
+    "header header header  header"
+    "menu_y menu_y menu_s menu_s"
+    "drop_y drop_y drop_s drop_s"
+    "line line line line"
+    "content_desc content content content"
+    "line2 line2 line2 line2 ";
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 0px 25px 25px 22px 25px 3px;
+  gap: 1px;
+  background-color: #ffffff;
+  padding: 1px;
+  width: 350px;
+  height: 20px;
+  vertical-align: center;
+  text-align: center;
+  font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.container > div {
+  background-color: rgb(255, 255, 255);
+  padding: 1px;
+}
+.container > div.header {
+  grid-area: header;
+  text-align: center;
+}
+.container > div.menu_y {
+  grid-area: menu_y;
+}
+.container > div.menu_s {
+  grid-area: menu_s;
+}
+.container > div.menu_t {
+  grid-area: menu_t;
+}
+.container > div.menu_c {
+  grid-area: menu_c;
+}
+.container > div.drop_y {
+  grid-area: drop_y;
+  vertical-align: center
+}
+.container > div.drop_s {
+  grid-area: drop_s;
+}
+.container > div.drop_t {
+  grid-area: drop_t;
+}
+.container > div.drop_c {
+  grid-area: drop_c;
+}
+.container > div.line {
+  grid-area: line;
+}
+.container > div.content_desc {
+  grid-area: content_desc;
+  vertical-align: center;
+  text-align: center;
+}
+.container > div.content {
+  grid-area: content;
+  vertical-align: center;
+  text-align: center;
+}
+.container > div.line2 {
+  grid-area: line2;
+}
+.tooltip {
+  background-color: #ffff;
+  font: 16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.dotted-divider {
+            border: 1px dotted #000;
+        }
+
+        /* Styling for the dashed divider */
+        .dashed-divider {
+            border: 1px dashed #333;
+        }
+
+        /* Styling for the solid divider */
+        .solid-divider {
+            border: 1px solid #555;
+        }
+
+        /* Additional styling for spacing and visibility */
+        hr {
+            margin: 20px 0;
+        }
+  </style>
+</head>
+
+<body>
+    <div class="container">
+      <div class="menu_y"><h4>Select Year</h4></div>
+      <div class="menu_s"><h4>Select Sector</h4></div>
+      <div class="drop_y"><select id="selectButton_year"></select></div>
+      <div class="drop_s"><select id="selectButton_sector"></select></div>
+      <div class="line"><hr style="width:100%;text-align:left;margin-left:0"></div>
+      <div class="content_desc"><h4>Selected Focus</h4></div>
+      <div class="content", id="content"></div>
+      <div class="line2"><hr style="width:100%;text-align:left;margin-left:0"></div>
+    </div>
+  <div id="zoomable"></div>
+  
+  
+  <script type="text/javascript">
+    var alldata = "melted_df2.csv";
+    var fdata;
+
+    // var margin_zoom = {top: 50, right: 50, bottom: 50, left: 50},
+    //     width = 1100 - margin_zoom.left - margin_zoom.right,
+    //     height = 1100 - margin_zoom.top - margin_zoom.bottom;
+
+    // var margin_header = {top: 10, right: 50, bottom: 50, left: 10},
+    //     width = 1100 - margin_header.left - margin_header.right,
+    //     height = 100 - margin_header.top - margin_header.bottom;
+
+    // var margin_header_filters = {top: 10, right: 50, bottom: 50, left: 10},
+    //     width = 600 - margin_header_filters.left - margin_header_filters.right,
+    //     height = 100 - margin_header_filters.top - margin_header_filters.bottom;
+
+    // var margin_header_filter_sector = {top: 10, right: 50, bottom: 50, left: 10},
+    //     width = 600 - margin_header_filter_sector.left - margin_header_filter_sector.right,
+    //     height = 100 - margin_header_filter_sector.top - margin_header_filter_sector.bottom;
+
+    const get_sets = function(data, field) { 
+        const values = data.map(d => d[field])
+        return [...new Set(values)];
+    }
+    
+    var datafilter = function(data, year, sector) {
+      year = year.length===0 ? 'All' : year;
+      sector = sector.length===0 ? 'All' : sector;
+      return data
+                .filter(d => year === 'All' ? true : d.year===year)
+                .filter(d => sector ==='All' ? true : d.sector_x === sector);
+}
+
+    populateMenus();
+
+    var data, oldFocus;
+
+    function populateMenus() {  
+
+      d3.csv(alldata, function(rows) {
+
+        data = rows;
+
+        fdata = datafilter(data,
+                            d3.select('#selectButton_year').node().value,
+                            d3.select('#selectButton_sector').node().value)
+        console.log('fdata_menu',fdata)
+        dtaMenu = fdata.map(function(d) {
+
+            return {
+             "y": d.year,
+             "s": d.sector_x
+            }
+        }
+        );
+
+        const year_set = get_sets(dtaMenu,'y').sort(d3.descending);
+        year_set.unshift('All');
+        const sector_set = get_sets(dtaMenu,'s').sort(d3.ascending);
+        sector_set.unshift('All')
+        
+        const menu = d3.select("#selectButton_year");
+
+        menu.selectAll("option")
+          .data(year_set)
+          .enter()
+          .append("option")
+          .property("selected", function(d) {
+            return d === "All";
+          })
+          .text(function(d) {
+            return d;
+          });
+
+          const menu_s = d3.select("#selectButton_sector");
+
+          menu_s.selectAll("option")
+            .data(sector_set)
+            .enter()
+            .append("option")
+            .property("selected", function(d) {
+              return d === "All";
+            })
+            .text(function(d) {
+              return d;
+            });
+        
+        menu
+          .on("change", function() {
+            changeCircles(this.value,
+                            d3.select('#selectButton_sector').node().value)
+          });
+
+        menu_s
+          .on("change", function() {
+            //console.log('drop-down-s',d3.select('#selectButton_year').value,this.value)
+            changeCircles(d3.select('#selectButton_year').node().value,
+                                    this.value)
+                                });
+
+        changeCircles(year_set[0],sector_set[0]);
+
+      });
+    };
+
+    // function removeOptions(selectbox) {
+    //   var i;
+    //   for (i = selectbox.options.length - 1; i >= 0; i--) {
+    //     selectbox.remove(i);
+    //   }
+    // };
+
+    makeHierarchy = (config) => {
+    const defaultConfig = {
+        childrenAccessorFn: ([key, value]) => value.size && Array.from(value),
+        sumFn: ([key, value]) => value,
+        sortFn: (a, b) => b.value - a.value,
+    };
+    const { data, reduceFn, groupByFns, childrenAccessorFn, sumFn, sortFn } = { ...defaultConfig, ...config };
+    const rollupData = d3.rollup(data, reduceFn, ...groupByFns);
+    const hierarchyData = d3.hierarchy([null, rollupData], childrenAccessorFn)
+        .sum(sumFn)
+        .sort(sortFn);
+    return hierarchyData;
+    }
+
+    
+    var zoomDiv = d3.select("#zoomable")
+
+    var svg = zoomDiv.append("svg").attr("width", "350").attr("height", "350"),
+      margin = 20,
+      diameter = +svg.attr("width"),
+      g = svg.append("g").attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
+      
+    var svg2 = d3.select("#content").append("div")
+      //   //.append("svg")
+      .attr("width", 500)
+      .attr("height", 300); 
+
+    // //added>>>>>>
+    // var format = d3.(",d");
+    // //>>>>>>>>>>>
+
+    var color = d3.scaleLinear()
+      .domain([-1, 5])
+      //.range(["hsl(0,0%,100%)", "hsl(47,33%,56%)"])
+      .range(["hsl(152,80%,80%)", "hsl(228,30%,40%)"])
+      .interpolate(d3.interpolateHcl);
+
+    // //added>>>>>>
+    // var stratify = d3.stratify()
+    //   .parentId(function(d) {
+    //     return d.id.substring(0, d.id.lastIndexOf("~"));
+    //   });
+    // //>>>>>>>>>>>
+
+    var pack = d3.pack()
+      .size([diameter - margin, diameter - margin])
+      .padding(2);
+
+    function changeCircles(year,sector) {        
+        g.selectAll('*').remove()
+        
+        fdata = datafilter(data,year, sector)
+    
+        root = makeHierarchy({
+        data: fdata,
+
+        groupByFns: [d=>d.cluster_name, d=>d.subcluster_name,d=>d.topic_name],
+        reduceFn: v => d3.mean(v, d => d["size"])
+        });
+    
+      var nodes = pack(root).descendants();
+      
+      // add name to nested dicts
+      function addKeyValueToChildren(data) {
+        if (Array.isArray(data)) {
+          data.forEach(child => {
+            child['name']=child.data[0];
+            if (child.children) {
+              addKeyValueToChildren(child.children);
+            }
+            if (!child.children) {
+              
+            }
+          });
+        }
+      return data;
+}
+
+    nodes = addKeyValueToChildren(nodes)
+
+    // add root text to focus div
+    svg2.html("Root")
+    
+    // add circle items
+    var circle = g.selectAll("*.circle")
+        .data(nodes);
+        //, function(d){
+        //  return d.id;
+        //});
+
+      svg.exit().remove();
+      circle.exit().remove();
+        
+      circle = circle.enter()
+        .append("circle")
+        .attr("class", function(d) {
+          return d.parent ? d.children ? "node" : "node node--leaf" : "node node--root";
+        })
+        .attr("pointer-events", d => !d.children ? null : null)
+        .style("fill", function(d) {
+          return d.children ? color(d.depth) : null;
+        })
+        .on("click", function(d) {
+          svg2.html("Root " + String(d3.map(d.ancestors(), d => d.data[0]).reverse()).replaceAll(",", " || "));
+          console.log(d);
+          return focus !== d && (zoom(d),d3.event.stopPropagation());
+        })
+        .merge(circle);
+
+      // add text items
+      var text = g.selectAll("*.text")
+        .data(nodes);
+        
+      text.exit().remove();
+        
+      text = text.enter()
+        .append("text")
+        .attr("class", d => !d.children || d.children.length === 0 ? "leaf" : "label");//.merge(text);
+        
+      text.text(function(d) {
+          return d.name;
+        })
+        .style("fill-opacity", function(d) {
+          return d.parent === root ? 1 : 0;
+        })
+        .style("display", function(d) {
+          return d.parent === root ? "inline" : "none";
+        })
+        .merge(text);
+
+      // select nodes for zooming
+      var node = g.selectAll("circle,text");
+      
+      var tooltipDiv = d3.select("#zoomable").append("div")
+         .attr("class", "tooltip")
+         .style("position", "absolute")
+         .attr('fill','white')
+         .style("opacity", 0);
+      
+      //event handling for tooltip
+      circle
+        .on("mouseover", function(d) {
+            tooltipDiv.transition().delay(100).duration(500).style("opacity", 1);
+            tooltipDiv.html(!d.children ? d.data[0] + ": " + d3.format(".4f")(d.data[1]) : d.data[0]); // Replace d.x with your desired tooltip text
+            tooltipDiv.style("left", d3.event.pageX - 5 + "px")
+            tooltipDiv.style("top", d3.event.pageY - 300+ "px")
+
+
+        })
+        .on("mouseout", function(d) {
+            tooltipDiv.transition().duration(500).style("opacity", 0);
+        })
+      d3.select("#zoomable")
+        .on("mousemove", function() {
+            tooltipDiv.style("left", d3.event.pageX -5 + "px")
+            tooltipDiv.style("top", d3.event.pageY -300+ "px")
+        });
+      
+      svg.on("click", () => zoom(root)); 
+      zoomTo([root.x, root.y, root.r * 2 + margin]);
+
+      function zoom(d) {
+        var focus = d;
+        if (!oldFocus) oldFocus = d;
+        
+        var transition = d3.transition()
+          .duration(d3.event && d3.event.altKey ? 7500 : 750)
+          .tween("zoom", function(d) {
+            const i = d3.interpolateZoom(
+                [oldFocus.x, oldFocus.y, oldFocus.r * 2 + margin],
+                [focus.x, focus.y, focus.r * 2 + margin]);
+            oldFocus = focus;
+            return function(t) {
+              zoomTo(i(t));
+            };
+          });
+
+        transition.selectAll("text")
+          .filter(function(d) {
+            return d.parent === focus || this.style.display === "inline";
+          })
+          .style("fill-opacity", function(d) {
+            return d.parent === focus ? 1 : 0;
+          })
+          .on("start", function(d) {
+            if (d.parent === focus) this.style.display = "inline";
+          })
+          .on("end", function(d) {
+            if (d.parent !== focus) {this.style.display = "none"};
+          });
+
+      }
+
+      function zoomTo(v) {
+        
+        var k = diameter / v[2];
+        circle.attr("transform", function(d) {
+          return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
+        });
+        text.attr("transform", function(d) {
+            return "translate(" + (d.x - v[0]) * k + "," + (d.y - v[1]) * k + ")";
+        });
+        circle.attr("r", function(d) {
+          return d.r * k;
+        });
+      }
+
+    };
+
+  </script>
+</body>
