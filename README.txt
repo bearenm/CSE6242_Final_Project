@@ -32,6 +32,8 @@ pip install -r /path/to/requirements.txt
 
 3. Running the Code: Once the environment is set up and dependencies are installed, you can proceed with executing the scripts in the CODE directory. File specific instructions will be documented in the following Execution section
 
+4. The final output visualization is a Tableau Workbook File (.twb) and will require usage of either Tableau Cloud or Tableau Desktop
+
 
 c. Execution
 
@@ -74,7 +76,6 @@ Output: LDA100_topic_word_norm_with_4_clusters.csv LDA100_topic_word_norm_with_4
 Description
 
 These scripts perform hierarchical agglomerative clustering on topic-word distributions generated from the topic_modelling section. Using cosine similarity as the distance metric, the code clusters similar topics into groups ranging from 2 to 4 clusters. For each configuration, it outputs the topic-word matrix with assigned cluster labels and aggregates summary statistics (such as the number of topics per cluster). The final outputs are utilized in the visualizations.
-
 4. visualization
 
 Code: flatten.py, index.html
@@ -83,5 +84,4 @@ Output: Tableau Dashboard
 
 Description
 
-This section focuses on building an interactive Tableau dashboard that visualizes the results from topic modeling and clustering. The dashboard incorporates cluster-level insights, enabling users to explore topics filtered by metadata such as year and sector. Additionally, a custom D3.js Circle Packing visualization is integrated via index.html, providing a dynamic and intuitive representation of topic clusters and their hierarchical structure.
-
+First, a pivoted dataframe was created from the melted_df dataset to structure the data for visualizations. Key metrics were aggregated based on the size dimension and ranked across three separate categorical columns: topic, subcluster, and cluster. These rankings and visualizations were made dynamically adjustable using global filters tied to the Sector and Year columns from the original melted dataset, allowing users to drill down into the data interactively. A separate word cloud was constructed using a different processed dataset the word matrix, which was prepared earlier to reflect topic word associations. Both datasets (pivoted_df and word matrix) were maintained as separate relational tables and used as data sources within Tableau. All visual elements including bar charts, topic distribution views, and word clouds were assembled into dashboards that collectively tell a story of how topics evolved across sectors and time, offering a comprehensive and intuitive exploration of the model outputs.
