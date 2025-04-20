@@ -76,6 +76,17 @@ Output: LDA100_topic_word_norm_with_4_clusters.csv LDA100_topic_word_norm_with_4
 Description
 
 These scripts perform hierarchical agglomerative clustering on topic-word distributions generated from the topic_modelling section. Using cosine similarity as the distance metric, the code clusters similar topics into groups ranging from 2 to 4 clusters. For each configuration, it outputs the topic-word matrix with assigned cluster labels and aggregates summary statistics (such as the number of topics per cluster). The final outputs are utilized in the visualizations.
+
+4. llm_renaming
+
+Code: llm_renaming.ipynb
+Input: input/LDA100_topic_word_norm_with_4_clusters.csv & order/LDA_100_topic_word_norm.csv
+Output: timestamp/LDA100_topic_word_norm_with_4_subclusters.csv
+
+Description
+
+This notebook emulates a financial analyst’s workflow by ingesting LDA generated topic weights, using an LLM to assign concise, domain specific labels, and then automatically reorganizing and refining subclusters and clusters , taking the initial cosine distance as a recommendation, into coherent, higher level groupings, thereby replacing much of the manual labeling and restructuring traditionally required to interpret large scale earnings call themes.
+
 4. visualization
 
 Code: flatten.py, index.html
