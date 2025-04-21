@@ -79,9 +79,9 @@ Description
 
 These scripts perform hierarchical agglomerative clustering on topic-word distributions generated from the topic_modelling section. Using cosine similarity as the distance metric, the code clusters similar topics into groups ranging from 2 to 4 clusters. For each configuration, it outputs the topic-word matrix with assigned cluster labels and aggregates summary statistics (such as the number of topics per cluster). The final outputs are utilized in the visualizations.
 
-4. llm_renaming
+4. llm_naming
 
-Code: llm_renaming.ipynb
+Code: llm_naming.ipynb
 Input: input/LDA100_topic_word_norm_with_4_clusters.csv & order/LDA_100_topic_word_norm.csv
 Output: timestamp/LDA100_topic_word_norm_with_4_subclusters.csv
 
