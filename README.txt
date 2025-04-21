@@ -8,9 +8,11 @@ To accomplish this, the project follows a structured approach:
 
 2. Topic Modeling: Advanced topic modeling will be applied using Latent Dirichlet Allocation (LDA) to uncover prominent themes within the calls.
 
-3. Hierarchical Clustering: A hybrid clustering method combining Large Language Models (LLMs) and human input will be used to ensure meaningful and accurate groupings of themes.
+3. Hierarchical Clustering: Generates topic-word matrices based on cosine similarity.
 
-4. Visualization: The extracted insights will be presented in a dynamic dashboard, created with Tableau for general visualization. A custom Circle Packing chart built in D3.js will provide an interactive and detailed exploration of the data.
+4. LLM Relabeling: A topic labeling and reclustering method using a Large Language Model (LLM) to ensure meaningful topic coherence and an accurate groupings of themes.
+
+5. Visualization: The extracted insights will be presented in a dynamic dashboard, created with Tableau for general visualization. A custom Circle Packing chart built in D3.js will provide an interactive and detailed exploration of the data.
 
 All scripts and resources needed to execute this project are located in the CODE directory.
 
@@ -85,9 +87,17 @@ Output: timestamp/LDA100_topic_word_norm_with_4_subclusters.csv
 
 Description
 
-This notebook emulates a financial analyst’s workflow by ingesting LDA generated topic weights, using an LLM to assign concise, domain specific labels, and then automatically reorganizing and refining subclusters and clusters , taking the initial cosine distance as a recommendation, into coherent, higher level groupings, thereby replacing much of the manual labeling and restructuring traditionally required to interpret large scale earnings call themes.
+This notebook emulates a financial analyst’s workflow by ingesting LDA generated topic weights, using an LLM to assign concise, domain specific labels, and then automatically reorganizing and refining subclusters and clusters, taking the initial cosine distance, from section 4, as a recommendation, into coherent, higher level groupings, thereby replacing much of the manual labeling and restructuring traditionally required to interpret large scale earnings call themes.
 
-4. visualization
+Installation
+
+It is necessary to install revelant packages and also to acquire an OpenAI API project key: https://platform.openai.com/docs/api-reference/project-api-keys  This must be set to the variable openai.api_key in the first block of text of the llm_relabeling notebook
+
+Execution
+
+Add a csv output of the clustering to the input/ folder. Then, add an output of topic_modelling to the order/ folder. After executing, the output will be saved to the output/ folder.
+
+5. visualization
 
 Code: flatten.py, index.html
 Input: LDA_100_doc_topic_norm_augmented.csv, LDA_100_topic_word_norm_with_4_with_subclusters.csv
